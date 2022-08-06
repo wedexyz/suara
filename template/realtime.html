@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>  Speech Emotion Recognition System</title>
+  <link rel="shortcut icon" href="lib\voice.svg" type="image/x-icon">
+	<link rel="stylesheet" type="text/css" href="lib\\style.css">
+    <link rel="stylesheet" href="lib\\bootsrap.min.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css"
+    integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+    
+
+</head>
+<body onload="initialize(),init()" >
+
+  <div class="container px-5 my-5 ">
+
+    <div class="row mb-2 bg-white  shadow-lg">
+      <a href="/" type="button" class="btn btn-danger"    style="float: right;position: relative;">logout</a>
+   
+
+    </div>
+
+    <div class="row mt-2 bg-white justify-content-center shadow-lg">
+     
+      <div class="col-lg-5 mt-5 mb-5">
+     
+       <h4>Recording</h4>
+        <div class="card border-start-0 rounded-3">
+          <div class="card-body p-4">
+            <div class=" mb-3">
+              <img src="lib\voice.svg" alt="" srcset="" style="	width: 350px;height: 300px">
+
+              <form method="post" action="/realtime">
+                <div> <input type="submit" value="record" name="record" class="btn btn-primary btn-lg" /> </div>
+              </form>
+              <hr>
+              <div><p>Result Rec {{metune}}</p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-5 mt-5">
+
+     <h4>Result realtime</h4>
+        <div class="card border-end-0 rounded-3">
+          <div class="card-body p-4">
+            <div class=" mb-2">
+              <!-- <div class="h1 fw-light">File Test</div> -->
+              <canvas></canvas>
+                <div class="kontak_login">
+                  <div id="label-container"></div>
+                </div>
+             
+            </div>
+        
+            <!-- End of contact form -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+
+
+
+
+
+
+
+
+<script src="lib\\bootstrap.min.js"></script>
+<script src="lib\\jquery-3.2.1.slim.min.js"></script>
+<script src="lib\\firebase.js"></script>
+<script >
+const URL = "https://teachablemachine.withgoogle.com/models/dl5wsx1D4/";
+
+  async function createModel() {
+      const checkpointURL = URL + "model.json"; // model topology
+      const metadataURL = URL + "metadata.json"; // model metadata
+
+      const recognizer = speechCommands.create(
+          "BROWSER_FFT", // fourier transform type, not useful to change
+          undefined, // speech commands vocabulary feature, not useful for your models
+          checkpointURL,
+          metadataURL);
+
+      // check that model and metadata are loaded via HTTPS requests.
+      await recognizer.ensureModelLoaded();
+
+      return recognizer;
+  }
+
+  async function init() {
+      const recognizer = await createModel();
+      const classLabels = recognizer.wordLabels(); // get class labels
+      const labelContainer = document.getElementById("label-container");
+      for (let i = 0; i < classLabels.length; i++) {
+          labelContainer.appendChild(document.createElement("div"));
+      }
+
+      // listen() takes two arguments:
+      // 1. A callback function that is invoked anytime a word is recognized.
+      // 2. A configuration object with adjustable fields
+      recognizer.listen(result => {
+          const scores = result.scores; // probability of prediction for each class
+          // render the probability scores per class
+          for (let i = 0; i < classLabels.length; i++) {
+              const classPrediction = classLabels[i] + ": " + result.scores[i].toFixed(2)*100 +"%";
+              labelContainer.childNodes[i].innerHTML = classPrediction;
+          }
+      }, {
+          includeSpectrogram: true, // in case listen should return result.spectrogram
+          probabilityThreshold: 0.75,
+          invokeCallbackOnNoiseAndUnknown: true,
+          overlapFactor: 0.50 // probably want between 0.5 and 0.75. More info in README
+      });
+
+      // Stop the recognition in 5 seconds.
+       setTimeout(() => recognizer.stopListening(), 5000);
+  }
+
+  console.clear();
+
+// UPDATE: there is a problem in chrome with starting audio context
+//  before a user gesture. This fixes it.
+
+var started = null;
+window.addEventListener('click', () => {
+  if (started) return;
+  started = true;
+  initialize();
+});
+
+
+function initialize() {
+  //document.body.querySelector('h1').remove();
+  const CVS = document.body.querySelector('canvas');
+  const CTX = CVS.getContext('2d');
+  const W = CVS.width = window.innerWidth;
+  const H = CVS.height = window.innerHeight;
+
+  const ACTX = new AudioContext();
+  const ANALYSER = ACTX.createAnalyser();
+
+  ANALYSER.fftSize = 4096;
+
+  navigator.mediaDevices.
+  getUserMedia({ audio: true }).
+  then(process);
+
+  function process(stream) {
+    const SOURCE = ACTX.createMediaStreamSource(stream);
+    SOURCE.connect(ANALYSER);
+    const DATA = new Uint8Array(ANALYSER.frequencyBinCount);
+    const LEN = DATA.length;
+    const h = H / LEN;
+    const x = W - 1;
+    CTX.fillStyle = 'hsl(280, 100%, 10%)';
+    CTX.fillRect(0, 0, W, H);
+
+    loop();
+
+    function loop() {
+      window.requestAnimationFrame(loop);
+      let imgData = CTX.getImageData(1, 0, W - 1, H);
+      CTX.fillRect(0, 0, W, H);
+      CTX.putImageData(imgData, 0, 0);
+      ANALYSER.getByteFrequencyData(DATA);
+      for (let i = 0; i < LEN; i++) {
+        let rat = DATA[i] / 255;
+        let hue = Math.round(rat * 120 + 280 % 360);
+        let sat = '100%';
+        let lit = 10 + 70 * rat + '%';
+        CTX.beginPath();
+        CTX.strokeStyle = `hsl(${hue}, ${sat}, ${lit})`;
+        CTX.moveTo(x, H - i * h);
+        CTX.lineTo(x, H - (i * h + h));
+        CTX.stroke();
+      }
+    }
+  }
+}
+</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/speech-commands@0.4.0/dist/speech-commands.min.js"></script>
+
+
+
+
+    </body>
+</html>

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>  Speech Emotion Recognition System</title>
+  <link rel="shortcut icon" href="lib\voice.svg" type="image/x-icon">
+	<link rel="stylesheet" type="text/css" href="lib\\style.css">
+    <link rel="stylesheet" href="lib\\bootsrap.min.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css"
+    integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+  
+</head>
+<body >
+
+	
+
+
+  <div class="user3 ">
+ 
+    <div class="card border-end-0 rounded-3">
+      <div class="card-body p-8">
+        <div class="text-center mb-2">
+          <a href="/" type="button" class="btn btn-danger"    style="float: right;position: relative;">logout</a>
+          <!-- <div class="h1 fw-light">File Test</div> -->
+          <img
+            src="lib\add.svg"
+            width="200px"
+            class="img-thumbnail border-0"
+            alt="gambar-voice"
+          />
+        </div>
+        <form method="post" enctype="multipart/form-data">
+
+          <!-- Email Input -->
+          <div class="input-group">
+            <input type="file" name="file" class="btn btn-primary btn-lg" />
+          </div>
+          <small class="text-muted">Upload file recorder</small>
+          <!-- Submit button -->
+          <div class="d-grid mt-3">
+         
+            <input type="submit" id="submitButton" value="prediction" class="btn btn-primary btn-lg" />
+            <div class="card mt-3">
+              <div class="card-body">
+                <p class="card-text">
+                  Result File {{output }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </form>
+        <!-- End of contact form -->
+      </div>
+    </div>
+
+
+        
+    
+    </div>
+	</div>
+<script src="lib\\jquery-3.2.1.slim.min.js"></script>
+<script src="lib\\bootstrap.min.js"></script>
+
+    </body>
+</html>
